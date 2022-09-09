@@ -78,6 +78,8 @@ class SimpleHttpClient {
 
     private CookieManager cookieManager
 
+    private BasicAuthCredentialPattern = /^.+:\/\/(?<toRemove>(?<credentials>.+:.+)@).+$/
+
     SimpleHttpClient() {
         cookieManager = new CookieManager()
         CookieHandler.setDefault(cookieManager)
@@ -112,6 +114,18 @@ class SimpleHttpClient {
             throw new IllegalStateException("Missing 'url' argument")
         if( !method )
             throw new IllegalStateException("Missing 'method' argument")
+
+        // Get basic auth token from URL
+        if( !basicToken ) {
+            def credentialMatcher = url =~ BasicAuthCredentialPattern
+            if( credentialMatcher.matches() ) {
+                def toRemove = credentialMatcher.group("toRemove")
+                basicToken = credentialMatcher.group("credentials")
+                // Remove basic auth credential from url.
+                url = url.replace(toRemove, "")
+            }
+        }
+
 
         // reset the error count
         errorCount = 0
